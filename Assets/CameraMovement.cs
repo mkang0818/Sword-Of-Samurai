@@ -45,20 +45,23 @@ public class CameraMovement : MonoBehaviour
     }
     private void LateUpdate()
     {
-        transform.position = Vector3.MoveTowards(transform.position, Target.position, followSpeed * Time.deltaTime);
-
-        finalDir = transform.TransformPoint(dirNormalized * maxDistance);
-
-        RaycastHit hit;
-
-        if (Physics.Linecast(transform.position, finalDir, out hit))
+        if (Target!= null)
         {
-            finalDistance = Mathf.Clamp(hit.distance, minDistance, maxDistance);
-        }
-        else
-        {
-            finalDistance = maxDistance;
-        }
-        realCamera.localPosition = Vector3.Lerp(realCamera.localPosition, dirNormalized * finalDistance, Time.deltaTime * smoothness);
+            transform.position = Vector3.MoveTowards(transform.position, Target.position, followSpeed * Time.deltaTime);
+
+            finalDir = transform.TransformPoint(dirNormalized * maxDistance);
+
+            RaycastHit hit;
+
+            if (Physics.Linecast(transform.position, finalDir, out hit))
+            {
+                finalDistance = Mathf.Clamp(hit.distance, minDistance, maxDistance);
+            }
+            else
+            {
+                finalDistance = maxDistance;
+            }
+            realCamera.localPosition = Vector3.Lerp(realCamera.localPosition, dirNormalized * finalDistance, Time.deltaTime * smoothness);
+        }        
     }
 }
