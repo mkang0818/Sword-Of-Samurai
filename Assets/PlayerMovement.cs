@@ -1,9 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
+using Photon.Realtime;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement : MonoBehaviourPun
 {
+    PhotonView PV;
     Animator anim;
     Camera cam;
     CharacterController controller;
@@ -19,50 +22,64 @@ public class PlayerMovement : MonoBehaviour
 
     public bool toggleCameraRotation;
 
-    float t = 0;
+    private State state;
+    enum State 
+    {
+        Idle, Run, Attack
+    }
+
     // Start is called before the first frame update
     void Start()
     {
+        PV = this.GetComponent<PhotonView>();
         anim = this.GetComponent<Animator>();
         cam = Camera.main;
         controller = this.GetComponent<CharacterController>();
         camera = GameObject.FindFirstObjectByType<CameraMovement>();
-        camera.Target = CameraTarget;
+        if (PV.IsMine)
+        {
+            camera.Target = CameraTarget;
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKey(KeyCode.LeftAlt))
+        if (PV.IsMine)
         {
-            toggleCameraRotation = true;
-        }else
-        {
-            toggleCameraRotation = false;
-        }
+            if (Input.GetKey(KeyCode.LeftAlt))
+            {
+                toggleCameraRotation = true;
+            }
+            else
+            {
+                toggleCameraRotation = false;
+            }
 
-        if(Input.GetKey(KeyCode.LeftShift))
-        {
-            run = true;
-            speed *= 1.5f;
-        }
-        else
-        {
-            run = false;
+            if (Input.GetKey(KeyCode.LeftShift))
+            {
+                run = true;
+                speed = 5;
+            }
+            else
+            {
+                run = false;
 
-            speed /= 1.5f;
-        }
+                speed = 3;
+            }
 
-        if (Input.GetMouseButtonDown(0))
-        {
-            anim.SetBool("BoolAt", true);
-        }
-        else
-        {
-            anim.SetBool("BoolAt", false);
-        }
+            if (Input.GetMouseButtonDown(0))
+            {
+                anim.SetBool("BoolAt", true);
+            }
+            else
+            {
+                anim.SetBool("BoolAt", false);
+            }
 
-        InputMovement();
+            InputMovement();
+        }
+        
     }
     private void LateUpdate()
     {
