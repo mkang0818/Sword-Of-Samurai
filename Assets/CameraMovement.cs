@@ -1,9 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
+using Photon.Realtime;
 
 public class CameraMovement : MonoBehaviour
 {
+    [HideInInspector] public PhotonView PV;
     public Transform Target;
     public float followSpeed = 10f;
     public float sensitivity = 100f;
@@ -13,55 +16,49 @@ public class CameraMovement : MonoBehaviour
     private float rotY;
 
     public Transform realCamera;
-    public Vector3 dirNormalized;
-    public Vector3 finalDir;
-    public float minDistance;
-    public float maxDistance;
-    public float finalDistance;
-    public float smoothness;
+    public Vector3 offset; // 카메라와 플레이어 사이의 오프셋
+    public float smoothness = 0.1f;
 
-    // Start is called before the first frame update
     void Start()
     {
-        rotX = transform.localRotation.eulerAngles.x;
-        rotY = transform.localRotation.eulerAngles.y;
-
-        dirNormalized = realCamera.localPosition.normalized;
-        finalDistance = realCamera.localPosition.magnitude;
+        if (Target != null)
+        {
+            Vector3 angles = transform.eulerAngles;
+            rotX = angles.x;
+            rotY = angles.y;
+        }
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
 
-    // Update is called once per frame
     void Update()
     {
-        rotX += -(Input.GetAxis("Mouse Y")) * sensitivity * Time.deltaTime;
-        rotY += Input.GetAxis("Mouse X") * sensitivity * Time.deltaTime;
+        if (Target != null && PV.IsMine)
+        {
+            rotX += -(Input.GetAxis("Mouse Y")) * sensitivity * Time.deltaTime;
+            rotY += Input.GetAxis("Mouse X") * sensitivity * Time.deltaTime;
 
-        rotX = Mathf.Clamp(rotX, -clampAngle, clampAngle);
-        Quaternion rot = Quaternion.Euler(rotX, rotY, 0);
-        transform.rotation = rot;
+            rotX = Mathf.Clamp(rotX, -clampAngle, clampAngle);
+
+            // 카메라의 회전만 처리
+            Quaternion rotation = Quaternion.Euler(rotX, rotY, 0);
+            transform.rotation = rotation;
+        }
     }
+
     private void LateUpdate()
     {
-        if (Target!= null)
+        if (Target != null && PV.IsMine)
         {
-            transform.position = Vector3.MoveTowards(transform.position, Target.position, followSpeed * Time.deltaTime);
+            // 목표 위치 계산 (Y축 회전만 적용)
+            Vector3 desiredPosition = Target.position + Quaternion.Euler(0, rotY, 0) * offset;
 
-            finalDir = transform.TransformPoint(dirNormalized * maxDistance);
+            // 목표 위치로 부드럽게 이동
+            transform.position = Vector3.Lerp(transform.position, desiredPosition, Time.deltaTime * followSpeed);
 
-            RaycastHit hit;
-
-            if (Physics.Linecast(transform.position, finalDir, out hit))
-            {
-                finalDistance = Mathf.Clamp(hit.distance, minDistance, maxDistance);
-            }
-            else
-            {
-                finalDistance = maxDistance;
-            }
-            realCamera.localPosition = Vector3.Lerp(realCamera.localPosition, dirNormalized * finalDistance, Time.deltaTime * smoothness);
-        }        
+            // 카메라가 항상 플레이어를 바라보도록 설정
+            realCamera.LookAt(Target.position + Vector3.up * offset.y);
+        }
     }
 }

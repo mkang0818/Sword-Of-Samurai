@@ -9,15 +9,14 @@ public class Anvil_Strike : MonoBehaviour
 
     void Start()
     {
-
-        anvilStrikeFX.SetActive(false);
-
+        StartCoroutine("Strike");
+        //anvilStrikeFX.SetActive(false);
     }
 
     void Update()
     {
-
-        if (Input.GetButtonDown("Fire1"))
+        print(transform.position);
+        /*if (Input.GetButtonDown("Fire1"))
         {
 
             if (strikeFlag == false)
@@ -25,7 +24,7 @@ public class Anvil_Strike : MonoBehaviour
                 StartCoroutine("Strike");
             }
 
-        }
+        }*/
 
     }
 
